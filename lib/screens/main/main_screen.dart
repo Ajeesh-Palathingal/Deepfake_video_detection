@@ -17,7 +17,7 @@ class MainScreen extends StatelessWidget {
           Container(
             height: double.infinity,
             width: double.infinity,
-            decoration: BoxDecoration(
+            decoration:const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
                   Color(0xFF322C2C),
@@ -117,7 +117,7 @@ class MainScreen extends StatelessWidget {
               ],
             ),
           ),
-          Center(
+         const Center(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
