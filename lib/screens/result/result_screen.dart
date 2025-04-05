@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:deepfake_video_detection/controller/appController.dart';
+import 'package:deepfake_video_detection/screens/main/main_screen.dart';
 import 'package:deepfake_video_detection/screens/main/widgets/file_pick_tile.dart';
 import 'package:deepfake_video_detection/screens/widgets/custom_elevated_button.dart';
 import 'package:deepfake_video_detection/screens/widgets/custom_text.dart';
@@ -5,9 +10,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/instance_manager.dart';
+import 'package:lottie/lottie.dart';
 
 class ResultScreen extends StatelessWidget {
-  const ResultScreen({super.key});
+  ResultScreen({super.key});
+  AppController appController = Get.put(AppController());
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +47,14 @@ class ResultScreen extends StatelessWidget {
                       Spacer(),
                       SvgPicture.asset("assets/svg/thick_vertical_lines.svg"),
                       SizedBox(width: 188.w),
-                      CustomText(
-                        text: "HOME",
-                        fontSize: 15.spMax,
-                        fontweight: FontWeight.w500,
-                        fontColor: Colors.red,
+                      GestureDetector(
+                        onTap: () => Get.offAll(MainScreen()),
+                        child: CustomText(
+                          text: "HOME",
+                          fontSize: 15.spMax,
+                          fontweight: FontWeight.w500,
+                          fontColor: Colors.red,
+                        ),
                       ),
                       SizedBox(width: 252.w),
                       CustomText(
@@ -74,76 +87,120 @@ class ResultScreen extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 25.w),
-                      SizedBox(
-                        height: 190.w,
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          scrollDirection: Axis.horizontal,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              height: 190.w,
-                              width: 180.w,
-                              color: Colors.grey[600],
-                            );
-                          },
-                          separatorBuilder: (context, index) {
-                            return SizedBox(width: 25.w);
-                          },
-                          itemCount: 4,
-                        ),
-                      ),
-                      SizedBox(height: 60),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CustomText(
-                            text: "This video is ",
-                            fontSize: 40,
-                            fontColor: Colors.white,
-                          ),
-                          CustomText(
-                            text: "fake",
-                            fontSize: 40,
-                            fontColor: Colors.red,
-                          ),
-                          CustomText(
-                            text: " with 99% accuracy",
-                            fontSize: 40,
-                            fontColor: Colors.white,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 170),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CustomElevatedButton(
-                            onPressed: () {},
-                            label: "CANCEL",
-                            backgroundColor: Colors.white,
-                            height: 50,
-                            width: 165,
-                            borderRadius: 5,
-                            fontSize: 15,
-                          ),
-                          SizedBox(width: 20),
-                          CustomElevatedButton(
-                            onPressed: () {},
-                            label: "ADD NEW VIDEO",
-                            backgroundColor: Colors.red,
-                            labelColor: Colors.white,
-                            height: 50,
-                            width: 165,
-                            borderRadius: 5,
-                            fontSize: 15,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  child: Obx(() {
+                    return appController.isLoading.value
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  height: 400,
+                                  child: Lottie.asset(
+                                      "assets/lottie/yoga_waiting.json"
+                                      // "assets/lottie/face_loading.json"
+                                      ),
+                                ),
+                                // SizedBox(
+                                //     height: 300,
+                                //     child: Lottie.asset(
+                                //         "assets/lottie/loading.json"))
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(height: 25.w),
+                              SizedBox(
+                                height: 190.w,
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (context, index) {
+                                    Uint8List bytes = base64Decode(
+                                        appController.imageFiles[index]);
+                                    return Container(
+                                      height: 190.w,
+                                      width: 180.w,
+                                      child: Center(
+                                          child: Image.memory(
+                                        bytes,
+                                        fit: BoxFit.cover,
+                                      )),
+                                    );
+                                  },
+                                  separatorBuilder: (context, index) {
+                                    return SizedBox(width: 25.w);
+                                  },
+                                  itemCount: 4,
+                                ),
+                              ),
+                              SizedBox(height: 60),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CustomText(
+                                    text: "This video is ",
+                                    fontSize: 40,
+                                    fontColor: Colors.white,
+                                  ),
+                                  CustomText(
+                                    text: appController.prediction.value,
+                                    fontSize: 40,
+                                    fontColor:
+                                        appController.prediction.value == "Fake"
+                                            ? Colors.red
+                                            : Colors.green,
+                                  ),
+                                  CustomText(
+                                    text:
+                                        " with ${appController.confidenceScore.value}% confidence",
+                                    fontSize: 40,
+                                    fontColor: Colors.white,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 170),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CustomElevatedButton(
+                                    onPressed: () {
+                                      Get.back();
+                                    },
+                                    label: "CANCEL",
+                                    backgroundColor: Colors.white,
+                                    height: 50,
+                                    width: 165,
+                                    borderRadius: 5,
+                                    fontSize: 15,
+                                  ),
+                                  SizedBox(width: 20),
+                                  CustomElevatedButton(
+                                    onPressed: () async {
+                                      appController.fileName.value = "";
+                                      await appController.pickFile();
+                                      if (appController
+                                          .fileName.value.isNotEmpty) {
+                                        if (appController.videoBytes != null) {
+                                          appController.analyzeVideo(
+                                              appController.videoBytes!,
+                                              appController.mimeType!);
+                                        }
+                                      }
+                                    },
+                                    label: "ADD NEW VIDEO",
+                                    backgroundColor: Colors.red,
+                                    labelColor: Colors.white,
+                                    height: 50,
+                                    width: 165,
+                                    borderRadius: 5,
+                                    fontSize: 15,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                  }),
                 ),
                 // SizedBox(height: 115.h),
               ],

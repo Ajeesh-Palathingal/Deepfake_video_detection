@@ -1,14 +1,21 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:deepfake_video_detection/controller/appController.dart';
+import 'package:deepfake_video_detection/screens/result/result_screen.dart';
 import 'package:deepfake_video_detection/screens/widgets/custom_elevated_button.dart';
 import 'package:deepfake_video_detection/screens/widgets/custom_text.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/route_manager.dart';
 
 class FilePickTile extends StatelessWidget {
   FilePickTile({super.key});
 
-  ValueNotifier<String?> fileNameNotifier = ValueNotifier(null);
+  AppController appController = Get.put(AppController());
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +43,7 @@ class FilePickTile extends StatelessWidget {
             radius: Radius.circular(5),
             child: GestureDetector(
               onTap: () {
-                _pickFile();
+                appController.pickFile();
               },
               child: Container(
                 width: 282,
@@ -65,11 +72,12 @@ class FilePickTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(5),
             ),
             child: Center(
-              child: ValueListenableBuilder(
-                valueListenable: fileNameNotifier,
-                builder: (context, fileName, _) {
+              child: Obx(
+                () {
                   return CustomText(
-                    text: fileName ?? "No selected files",
+                    text: appController.fileName.value.isEmpty
+                        ? "No selected files"
+                        : appController.fileName.value,
                     fontColor: Colors.black,
                   );
                 },
@@ -91,7 +99,15 @@ class FilePickTile extends StatelessWidget {
                   borderRadius: 5,
                 ),
                 CustomElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    // print(appController.videoPath.value.split('/').last);
+                    if (appController.videoBytes != null) {
+                      appController.analyzeVideo(
+                          appController.videoBytes!, appController.mimeType!);
+
+                      Get.to(() => ResultScreen());
+                    }
+                  },
                   label: "ANALYSE",
                   backgroundColor: Colors.red,
                   labelColor: Colors.white,
@@ -105,16 +121,5 @@ class FilePickTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-    );
-
-    if (result != null) {
-      print('File selected: ${result.files.single.name}');
-      fileNameNotifier.value = result.files.single.name;
-    }
   }
 }

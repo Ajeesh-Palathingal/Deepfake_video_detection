@@ -2,6 +2,7 @@ import 'package:deepfake_video_detection/screens/main/main_screen.dart';
 import 'package:deepfake_video_detection/screens/result/result_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,15 +19,15 @@ class MyApp extends StatelessWidget {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, _) {
-          return MaterialApp(
+          return GetMaterialApp(
             title: 'Deepfake Video Detection',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-            // home: const MainScreen(),
-            home: ResultScreen(),
+            home:  MainScreen(),
+            // home: ResultScreen(),
           );
         });
   }
